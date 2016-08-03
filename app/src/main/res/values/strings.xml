@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Speech Translator</string>
+    <string name="button_description">Tap and hold to talk</string>
+    <string name="speech_button">Speech Button</string>
 </resources>
