@@ -11,25 +11,46 @@
         android:paddingTop="@dimen/activity_vertical_margin"
         tools:context="ng.com.tinweb.www.speechtranslator.MainActivity">
 
-        <TextView
-            android:id="@+id/text"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/button_description"
-            android:textColor="@color/colorPrimaryDark"
-            android:layout_margin="10dp"
-            android:layout_centerInParent="true"/>
+            android:orientation="vertical"
+            android:layout_centerInParent="true">
 
-        <ImageButton
-            android:id="@+id/button"
-            android:src="@drawable/ic_keyboard_voice"
-            android:background="@drawable/round_button"
-            android:layout_below="@id/text"
-            android:layout_centerInParent="true"
-            android:padding="15dp"
-            android:elevation="5dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:contentDescription="@string/speech_button" />
+            <ProgressBar
+                android:id="@+id/speechBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:padding="10dp" />
+
+            <TextView
+                android:id="@+id/text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/button_description"
+                android:layout_gravity="center"
+                android:textColor="@color/colorPrimaryDark"
+                android:layout_margin="10dp"/>
+
+            <ImageButton
+                android:id="@+id/button"
+                android:src="@drawable/ic_keyboard_voice"
+                android:background="@drawable/round_button"
+                android:layout_gravity="center"
+                android:padding="15dp"
+                android:elevation="5dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/speech_button" />
+
+            <TextView
+                android:id="@+id/speech"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_gravity="center"/>
+        </LinearLayout>
     </RelativeLayout>
 </layout>

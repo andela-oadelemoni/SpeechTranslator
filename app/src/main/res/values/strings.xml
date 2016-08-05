@@ -2,4 +2,7 @@
     <string name="app_name">Speech Translator</string>
     <string name="button_description">Tap and hold to talk</string>
     <string name="speech_button">Speech Button</string>
+    <string name="listening_action">Listening…</string>
+    <string name="translating">Translating…</string>
+    <string name="friendly_error">Translating taking longer than usual…</string>
 </resources>
