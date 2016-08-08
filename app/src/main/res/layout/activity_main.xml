@@ -17,6 +17,14 @@
             android:orientation="vertical"
             android:layout_centerInParent="true">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginLeft="40dp"
+                android:layout_marginRight="40dp"
+                android:text="@string/command_list"/>
+
             <ProgressBar
                 android:id="@+id/speechBar"
                 style="?android:attr/progressBarStyleHorizontal"

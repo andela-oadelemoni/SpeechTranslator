@@ -4,5 +4,12 @@
     <string name="speech_button">Speech Button</string>
     <string name="listening_action">Listening…</string>
     <string name="translating">Translating…</string>
-    <string name="friendly_error">Translating taking longer than usual…</string>
+    <string name="friendly_error">Translation taking longer than usual…</string>
+
+    <string name="bulb">bulb</string>
+    <string name="fan">fan</string>
+    <string name="on">on</string>
+    <string name="off">off</string>
+    <string name="publish_successful">Message successfully sent</string>
+    <string name="command_list">Accepted keywords are:\n <b>Bulb on, Bulb off, Fan on, and Fan off</b></string>
 </resources>

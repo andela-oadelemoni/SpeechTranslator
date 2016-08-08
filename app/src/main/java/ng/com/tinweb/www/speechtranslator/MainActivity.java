@@ -1,12 +1,15 @@
 package ng.com.tinweb.www.speechtranslator;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
-import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,15 +17,25 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
 
+import com.pubnub.api.PubNub;
+import com.pubnub.api.callbacks.PNCallback;
+import com.pubnub.api.models.consumer.PNPublishResult;
+import com.pubnub.api.models.consumer.PNStatus;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 
 import ng.com.tinweb.www.speechtranslator.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity implements View.OnLongClickListener,
-        View.OnTouchListener, RecognitionListener {
+        View.OnTouchListener, SpeechRecognitionManager.Processor {
 
+    private static final int PERMISSION_REQUEST_CODE = 7;
 
     private SpeechRecognizer speechRecognizer;
+    private SpeechRecognitionManager recognitionManager;
     private Intent recognizerIntent;
     private String LOG_TAG = "Voice";
 
@@ -34,14 +47,45 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
+        checkAudioPermission();
+
         binding.button.setOnLongClickListener(this);
         binding.button.setOnTouchListener(this);
 
         binding.speechBar.setVisibility(View.INVISIBLE);
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
-        speechRecognizer.setRecognitionListener(this);
+
+        recognitionManager = new SpeechRecognitionManager(binding, this);
+        speechRecognizer.setRecognitionListener(recognitionManager);
 
         // RECOGNIZER INTENTS
+        setupRecognizerIntent();
+    }
+
+    private void checkAudioPermission() {
+        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO);
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            requestContactsPermission();
+        }
+    }
+
+    private void requestContactsPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
+            Toast.makeText(this, "Application Needs Audio Permission", Toast.LENGTH_LONG).show();
+        }
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
+                PERMISSION_REQUEST_CODE);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (!(requestCode == PERMISSION_REQUEST_CODE && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+            finish();
+        }
+    }
+
+    private void setupRecognizerIntent() {
         recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "en");
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
@@ -50,12 +94,11 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
     }
 
-
     @Override
     protected void onResume() {
         super.onResume();
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
-        speechRecognizer.setRecognitionListener(this);
+        speechRecognizer.setRecognitionListener(recognitionManager);
     }
 
     @Override
@@ -72,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
         if (v.getId() == binding.button.getId()) {
             isKeyPressed = !isKeyPressed;
             ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
-            toneGen1.startTone(ToneGenerator.TONE_CDMA_PIP,150);
+            toneGen1.startTone(ToneGenerator.TONE_CDMA_PIP, 150);
             startListeningForSpeech();
         }
         return true;
@@ -104,97 +147,66 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
     @Override
-    public void onReadyForSpeech(Bundle params) {
-        Log.i(LOG_TAG, "onReadyForSpeech");
-        binding.speech.setText(R.string.translating);
-    }
-
-    @Override
-    public void onBeginningOfSpeech() {
-        Log.i(LOG_TAG, "onBeginningOfSpeech");
-        binding.speechBar.setIndeterminate(false);
-        binding.speechBar.setMax(10);
-    }
-
-    @Override
-    public void onRmsChanged(float rmsdB) {
-        Log.i(LOG_TAG, "onRmsChanged: " + rmsdB);
-        binding.speechBar.setProgress((int) rmsdB);
-    }
-
-    @Override
-    public void onBufferReceived(byte[] buffer) {
-        Log.i(LOG_TAG, "onBufferReceived: " + buffer);
-    }
-
-    @Override
-    public void onEndOfSpeech() {
-        Log.i(LOG_TAG, "onEndOfSpeech");
-        binding.speechBar.setIndeterminate(true);
-    }
-
-    @Override
-    public void onError(int error) {
-        String errorMessage = getErrorText(error);
-        Log.d(LOG_TAG, "FAILED " + errorMessage);
-        binding.speech.setText(R.string.friendly_error);
-    }
-
-    @Override
-    public void onResults(Bundle results) {
-        Log.i(LOG_TAG, "onResults");
+    public void processResult(Bundle results) {
+        Log.i(LOG_TAG, "processResultsCalled");
 
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         String text = matches.get(0);
+
+        try {
+            processText(text);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         binding.speech.setText(text);
     }
 
-    @Override
-    public void onPartialResults(Bundle partialResults) {
-        Log.i(LOG_TAG, "onPartialResults");
-    }
-
-    @Override
-    public void onEvent(int eventType, Bundle params) {
-        Log.i(LOG_TAG, "onEvent");
-    }
-
-    private String getErrorText(int errorCode) {
-        String message;
-        switch (errorCode) {
-            case SpeechRecognizer.ERROR_AUDIO:
-                message = "Audio recording error";
-                break;
-            case SpeechRecognizer.ERROR_CLIENT:
-                message = "Client side error";
-                break;
-            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
-                message = "Insufficient permissions";
-                break;
-            case SpeechRecognizer.ERROR_NETWORK:
-                message = "Network error";
-                break;
-            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
-                message = "Network timeout";
-                break;
-            case SpeechRecognizer.ERROR_NO_MATCH:
-                message = "No match";
-                break;
-            case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
-                message = "RecognitionService busy";
-                break;
-            case SpeechRecognizer.ERROR_SERVER:
-                message = "error from server";
-                break;
-            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
-                message = "No speech input";
-                break;
-            default:
-                message = "Didn't understand, please try again.";
-                break;
+    private void processText(String text) throws JSONException {
+        String decodedText = text.toLowerCase();
+        JSONObject jsonObject = new JSONObject();
+        if (decodedText.matches("(.*)bulb(.*)off(.*)")) {
+            jsonObject.put("command", "bulb off");
         }
-        return message;
+        else if (decodedText.matches("(.*)bulb(.*)on(.*)")) {
+            jsonObject.put("command", "bulb on");
+        }
+        else if (decodedText.matches("(.*)fan(.*)off(.*)")) {
+            jsonObject.put("command", "fan off");
+        }
+        else if (decodedText.matches("(.*)fan(.*)on(.*)")) {
+            jsonObject.put("command", "fan on");
+        }
+        else {
+            jsonObject.put("command", "invalid command received");
+        }
+        publishMessage(jsonObject);
     }
+
+    private void publishMessage(JSONObject message) throws JSONException {
+        if (message.length() > 0) {
+            PubNub pubNub = SpeechTranslatorApplication.getPubNub();
+            pubNub.publish()
+                    .message(message.get("command"))
+                    .channel("Channel-12smb62lc")
+                    .shouldStore(true)
+                    .usePOST(true)
+                    .async(new PNCallback<PNPublishResult>() {
+                        @Override
+                        public void onResponse(PNPublishResult result, PNStatus status) {
+                            // handle publish result, status always present, result if successful
+                            // status.isError to see if error happened
+                            if (status.isError()) {
+                                Toast.makeText(MainActivity.this, "Error!! "+status.getErrorData().getInformation(), Toast.LENGTH_LONG).show();
+                            }
+                            else {
+                                Toast.makeText(MainActivity.this, "Successful ", Toast.LENGTH_LONG).show();
+                            }
+
+                        }
+                    });
+        }
+    }
+
 
 }
