@@ -12,4 +12,11 @@
     <string name="off">off</string>
     <string name="publish_successful">Message successfully sent</string>
     <string name="command_list">Accepted keywords are:\n <b>Bulb on, Bulb off, Fan on, and Fan off</b></string>
+    <string name="default_status">No Activity Triggered Yet</string>
+    <string-array name="return_messages">
+        <item>fan is now on</item>
+        <item>fan is now off</item>
+        <item>bulb is now on</item>
+        <item>bulb is now off</item>
+    </string-array>
 </resources>

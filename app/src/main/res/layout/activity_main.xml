@@ -21,9 +21,19 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
+                android:layout_marginBottom="40dp"
                 android:layout_marginLeft="40dp"
                 android:layout_marginRight="40dp"
                 android:text="@string/command_list"/>
+
+            <TextView
+                android:id="@+id/status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/default_status"
+                android:textAllCaps="true"
+                android:textSize="18sp"
+                android:layout_gravity="center"/>
 
             <ProgressBar
                 android:id="@+id/speechBar"
