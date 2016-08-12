@@ -188,7 +188,7 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
             PubNub pubNub = SpeechTranslatorApplication.getPubNub();
             pubNub.publish()
                     .message(message.get("command"))
-                    .channel("Channel-12smb62lc")
+                    .channel("Channel=IOTHack")
                     .shouldStore(true)
                     .usePOST(true)
                     .async(new PNCallback<PNPublishResult>() {
