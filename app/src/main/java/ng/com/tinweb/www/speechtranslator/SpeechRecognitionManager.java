@@ -50,14 +50,13 @@ public class SpeechRecognitionManager implements RecognitionListener {
     public void onEndOfSpeech() {
         Log.i(LOG_TAG, "onEndOfSpeech");
         binding.speechBar.setIndeterminate(true);
-        binding.speech.setText("Speech Ended!");
     }
 
     @Override
     public void onError(int error) {
         String errorMessage = getErrorText(error);
         Log.d(LOG_TAG, "FAILED " + errorMessage);
-        binding.speech.setText(errorMessage);
+        binding.speech.setText(R.string.friendly_error);
     }
 
     @Override

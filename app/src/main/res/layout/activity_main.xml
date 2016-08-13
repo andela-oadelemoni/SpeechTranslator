@@ -67,8 +67,23 @@
                 android:id="@+id/speech"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textSize="18sp"
                 android:layout_marginTop="20dp"
                 android:layout_gravity="center"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_height="wrap_content"
+                android:text="Or use an alternate voice input"
+                android:layout_gravity="center"/>
+
+            <Button
+                android:id="@+id/google_speech"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="GOOGLE VOICE INPUT"/>
         </LinearLayout>
     </RelativeLayout>
 </layout>

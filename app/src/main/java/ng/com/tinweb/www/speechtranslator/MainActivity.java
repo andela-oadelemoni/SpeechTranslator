@@ -1,6 +1,7 @@
 package ng.com.tinweb.www.speechtranslator;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
@@ -31,13 +32,15 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import ng.com.tinweb.www.speechtranslator.databinding.ActivityMainBinding;
 
-public class MainActivity extends AppCompatActivity implements View.OnLongClickListener,
-        View.OnTouchListener, SpeechRecognitionManager.Processor {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener,
+        View.OnLongClickListener, View.OnTouchListener, SpeechRecognitionManager.Processor {
 
     private static final int PERMISSION_REQUEST_CODE = 7;
+    private final int GOOGLE_SPEECH_INPUT_CODE = 100;
 
     private static final String JSON_KEY = "command";
 
@@ -73,6 +76,9 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
         // set pubnub object;
         pubNub = SpeechTranslatorApplication.getPubNubObject();
         subscribeToPubNub();
+
+        // setup alternative voice input
+        binding.googleSpeech.setOnClickListener(this);
     }
 
     private void checkAudioPermission() {
@@ -190,9 +196,6 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
         else if (decodedText.matches("(.*)fan(.*)on(.*)")) {
             jsonObject.put(JSON_KEY, "fan on");
         }
-        else {
-            jsonObject.put(JSON_KEY, "invalid command received");
-        }
         publishMessage(jsonObject);
     }
 
@@ -271,13 +274,15 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
 
             @Override
             public void message(PubNub pubnub, PNMessageResult message) {
-                final String status = message.getMessage().get(JSON_KEY).textValue();
-                MainActivity.this.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        showReturnMessage(status);
-                    }
-                });
+                if (message.getMessage() != null) {
+                    final String status = message.getMessage().get(JSON_KEY).textValue();
+                    MainActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            showReturnMessage(status);
+                        }
+                    });
+                }
             }
 
             @Override
@@ -304,4 +309,53 @@ public class MainActivity extends AppCompatActivity implements View.OnLongClickL
     }
 
 
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == binding.googleSpeech.getId()) {
+            promptGoogleSpeechInput();
+        }
+    }
+
+    private void promptGoogleSpeechInput() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
+                getString(R.string.listening_action));
+        try {
+            startActivityForResult(intent, GOOGLE_SPEECH_INPUT_CODE);
+        } catch (ActivityNotFoundException a) {
+            Toast.makeText(getApplicationContext(),
+                    getString(R.string.speech_not_supported),
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Receiving speech input
+     * */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode) {
+            case GOOGLE_SPEECH_INPUT_CODE: {
+                if (resultCode == RESULT_OK && null != data) {
+
+                    ArrayList<String> result = data
+                            .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    String text = result.get(0);
+                    try {
+                        processText(text);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    binding.speech.setText(text);
+                }
+                break;
+            }
+
+        }
+    }
 }
