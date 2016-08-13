@@ -37,7 +37,6 @@ import java.util.Locale;
 
 import ng.com.tinweb.www.speechtranslator.databinding.ActivityMainBinding;
 import pl.droidsonroids.gif.GifDrawable;
-import pl.droidsonroids.gif.GifImageView;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener,
         View.OnLongClickListener, View.OnTouchListener, SpeechRecognitionManager.Processor {
@@ -45,7 +44,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int PERMISSION_REQUEST_CODE = 7;
     private final int GOOGLE_SPEECH_INPUT_CODE = 100;
 
-    private static final String JSON_KEY = "command";
+    private static final String COMMAND = "command";
+    private static final String RESPONSE = "response";
 
     private SpeechRecognizer speechRecognizer;
     private SpeechRecognitionManager recognitionManager;
@@ -205,17 +205,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void processText(String text) throws JSONException {
         String decodedText = text.toLowerCase();
         JSONObject jsonObject = new JSONObject();
+
         if (decodedText.matches("(.*)bulb(.*)off(.*)")) {
-            jsonObject.put(JSON_KEY, "bulb off");
+            jsonObject.put(COMMAND, "bulb off");
         }
         else if (decodedText.matches("(.*)bulb(.*)on(.*)")) {
-            jsonObject.put(JSON_KEY, "bulb on");
+            jsonObject.put(COMMAND, "bulb on");
         }
         else if (decodedText.matches("(.*)fan(.*)off(.*)")) {
-            jsonObject.put(JSON_KEY, "fan off");
+            jsonObject.put(COMMAND, "fan off");
         }
         else if (decodedText.matches("(.*)fan(.*)on(.*)")) {
-            jsonObject.put(JSON_KEY, "fan on");
+            jsonObject.put(COMMAND, "fan on");
         }
         publishMessage(jsonObject);
     }
@@ -223,7 +224,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void publishMessage(JSONObject message) throws JSONException {
         if (message.length() > 0) {
             pubNub.publish()
-                    .message(message.get(JSON_KEY))
+                    .message(message.toString())
                     .channel(SpeechTranslatorApplication.getPubnubChannel())
                     .shouldStore(true)
                     .usePOST(true)
@@ -295,8 +296,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void message(PubNub pubnub, PNMessageResult message) {
-                if (message.getMessage() != null) {
-                    final String status = message.getMessage().get(JSON_KEY).textValue();
+                if (message.getMessage().get(RESPONSE) != null) {
+                    final String status = message.getMessage().get(RESPONSE).textValue();
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -339,7 +340,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     }
-
 
     @Override
     public void onClick(View v) {
