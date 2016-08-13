@@ -14,6 +14,7 @@
     <string name="command_list">Accepted keywords are:\n <b>Bulb on, Bulb off, Fan on, and Fan off</b></string>
     <string name="default_status">No Activity Triggered Yet</string>
     <string name="speech_not_supported">Speech Not Supported</string>
+    <string name="bulb_status">Bulb status</string>
     <string-array name="return_messages">
         <item>fan is now on</item>
         <item>fan is now off</item>

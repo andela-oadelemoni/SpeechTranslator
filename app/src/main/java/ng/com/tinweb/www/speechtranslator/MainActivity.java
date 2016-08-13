@@ -29,12 +29,15 @@ import com.pubnub.api.models.consumer.pubsub.PNPresenceEventResult;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 import ng.com.tinweb.www.speechtranslator.databinding.ActivityMainBinding;
+import pl.droidsonroids.gif.GifDrawable;
+import pl.droidsonroids.gif.GifImageView;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener,
         View.OnLongClickListener, View.OnTouchListener, SpeechRecognitionManager.Processor {
@@ -53,6 +56,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private ActivityMainBinding binding;
     private boolean isKeyPressed = false;
+
+    // Gif Image
+    private GifDrawable fanGifFromResource;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +85,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // setup alternative voice input
         binding.googleSpeech.setOnClickListener(this);
+
+        // Fan gif image
+        try {
+            fanGifFromResource = new GifDrawable(getResources(), R.drawable.fan);
+            binding.fan.setImageDrawable(fanGifFromResource);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        setupFanGifImage();
+    }
+
+    private void setupFanGifImage() {
+        if (fanGifFromResource.isPlaying()) {
+            fanGifFromResource.stop();
+        }
     }
 
     private void checkAudioPermission() {
@@ -304,7 +325,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         List<String> messagesList = new ArrayList<>(Arrays.asList(returnMessages));
 
         if (messagesList.contains(message)) {
-            binding.status.setText(message);
+            if (message.equals(returnMessages[0])) {
+                fanGifFromResource.start();
+            }
+            else if (message.equals(returnMessages[1])) {
+                fanGifFromResource.stop();
+            }
+            else if (message.equals(returnMessages[2])) {
+                binding.bulb.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.light_on));
+            }
+            else if (message.equals(returnMessages[3])) {
+                binding.bulb.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.light_off));
+            }
         }
     }
 
